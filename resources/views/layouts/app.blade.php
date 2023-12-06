@@ -62,7 +62,7 @@
   </style>
   {{-- blade-formatter-enable --}}
 </head>
-
+@include('layouts.navigation')
 <body class="container mx-auto mt-10 mb-10 max-w-3xl">
   @yield('content')
 </body>
