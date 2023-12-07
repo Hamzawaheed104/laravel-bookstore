@@ -18,7 +18,7 @@
   </div>
 
   <div class="mb-4">
-    <a href="{{ route('books.reviews.create', $book) }}" class="reset-link">
+    <a href="{{ route('books.reviews.create', $book) }}" class="btn h-10">
       Add a review!</a>
   </div>
 
@@ -31,9 +31,11 @@
             <div class="mb-2 flex items-center justify-between">
               <div class="font-semibold">
                 <x-star-rating :rating="$review->rating" />
+                <span class="text-green-700 ml-5">{{ $review->user->name }}</span>
               </div>
               <div class="book-review-count">
-                {{ $review->created_at->format('M j, Y') }}</div>
+                {{ $review->created_at->format('M j, Y') }}
+              </div>
             </div>
             <p class="text-gray-700">{{ $review->review }}</p>
           </div>

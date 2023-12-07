@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\book;
+use App\Models\Review;
 
 class ReviewController extends Controller
 {
@@ -38,8 +40,11 @@ class ReviewController extends Controller
             'review' => 'required|min:15',
             'rating' => 'required|min:1|max:5|integer',
         ]);
+        $user = Auth::user();
+        $review = new Review($data);
+        $review->user()->associate($user);
 
-        $book->reviews()->create($data);
+        $book->reviews()->save($review);
         return redirect()->route('books.show', $book); 
     }
 

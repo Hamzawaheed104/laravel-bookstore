@@ -40,6 +40,8 @@
               <a href="{{ route('books.show', $book) }}" class="book-title">{{ $book->title }}</a>
               <span class="book-author">by {{ $book->author }}</span>
             </div>
+            <span class="text-green-700 mr-2">${{ $book->price }}</span>
+              <a href="{{ route('payment.purchase', ['book_id' => $book->id]) }}" class="btn h-10 mr-5">Purchase</a>
             <div>
               <div class="book-rating">
                 <x-star-rating :rating="$book->reviews_avg_rating" />
