@@ -13,7 +13,7 @@
       </div>
 
       <div class="text-center mb-4">
-        <p class="text-gray-600">Thank you for your purchase!</p>
+        <p class="text-gray-600">Thank you purchasing!</p>
       </div>
 
       <div class="text-center">
