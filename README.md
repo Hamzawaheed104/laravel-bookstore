@@ -1,5 +1,5 @@
 # Laravel Bookstore Setup
-Follow the following steps to setup Magento in Ubuntu
+Follow the following steps to setup project
 
 - Install Docker desktop from official docker [website](https://www.docker.com/products/docker-desktop/)
 - Run ` docker compose up -d ` to setup all containers
