@@ -39,6 +39,10 @@ jobs:
       - name: Generate application key
         run: php artisan key:generate
 
+      - name: Create MySQL database
+        run: |
+          mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS test_database;"
+          
       - name: Set up MySQL database
         run: |
           php artisan migrate:refresh --database=test_database --force
