@@ -18,6 +18,7 @@
   </div>
 
   <div class="mb-4">
+    <a href="{{ route('payment.purchase', ['book_id' => $book->id]) }}" class="btn h-10 mr-5">Purchase</a>
     <a href="{{ route('books.reviews.create', $book) }}" class="btn h-10">
       Add a review!</a>
   </div>
