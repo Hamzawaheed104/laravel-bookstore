@@ -39,14 +39,11 @@ jobs:
       - name: Generate application key
         run: php artisan key:generate
 
-      - name: Create MySQL database
-        run: |
-          mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS test_database;"
-          
       - name: Set up MySQL database
         run: |
-          php artisan migrate:refresh --database=test_database --force
-          php artisan db:seed --database=test_database
+          php artisan config:cache
+          php artisan migrate:refresh --force
+          php artisan db:seed --force
 
       - name: Run PHPUnit tests
         run: php artisan test
