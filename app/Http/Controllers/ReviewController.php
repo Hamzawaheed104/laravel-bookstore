@@ -16,14 +16,6 @@ class ReviewController extends Controller
     }
     
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
      * Show the form for creating a new resource.
      */
     public function create(Book $book)
@@ -51,32 +43,58 @@ class ReviewController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($review)
     {
-        //
+        $review = Review::find($review);
+        $book = $review->book;
+        dd($review);
+        $user = Auth::user();
+        return view('books.reviews.show', ['book' => $book, 'review' => $review, 'user' => $user]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($book, $review)
     {
-        //
+        $review = Review::find($review);
+        return view('books.reviews.edit', ['review' => $review]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $book, $review)
     {
-        //
+        $data = $request->validate([
+            'review' => 'required|min:15',
+            'rating' => 'required|min:1|max:5|integer',
+        ]);
+
+        $review = Review::find($review);
+
+        if ($review) {
+            $review->update([
+                'review' => $data['review'],
+                'rating' => $data['rating'],
+            ]);
+            return redirect()->route('books.show', ['book' => $book]);
+        } else {
+            return redirect()->route('books.show', ['book' => $book])->with('error', 'Review not updated, Please try again.');
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, $book, $review)
     {
-        //
+        $review = Review::find($review);
+        if ($review) {
+            $review->delete();
+            return redirect()->route('books.show', ['book' => $book]);
+        } else {
+            return redirect()->route('books.show', ['book' => $book])->with('error', 'Review not deleted, Please try again.');
+        }
     }
 }

@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('auth.login');
-});
+Route::get('/',[BookController::class, 'index']);
 
 Route::get('/dashboard', [BookController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -28,7 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('books', BookController::class)->only(['index', 'show']);
-    Route::resource('books.reviews', ReviewController::class)->scoped(['review' => 'book'])->only(['create','store']);
+    Route::resource('books.reviews', ReviewController::class)->scoped(['review' => 'book']);
 
     Route::post('/checkout',[PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/success',[PaymentController::class, 'success'])->name('payment.success');

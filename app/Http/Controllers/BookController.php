@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Book;
+use Illuminate\Support\Facades\Auth;
 
 
 class BookController extends Controller
@@ -14,30 +15,27 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
-        $title = $request->input('title');
-        $filter = $request->input('filter', '');
-
-        $books = Book::when(
-            $title,
-            fn($query, $title) => $query->title($title)
-        );
-
-        $books = match ($filter) {
-            'popular_last_month' => $books->popularLastMonth(),
-            'popular_last_6months' => $books->popularLast6Months(),
-            'highest_rated_last_month' => $books->highestRatedLastMonth(),
-            'highest_rated_last_6months' => $books->highestRatedLast6Months(),
-            default => $books->latest()->withAvgRating()->withReviewsCount()
-        };
-
-        $cacheKey = 'books:' . $filter . ':' . $title;
-        $books = Cache::remember(
-                $cacheKey,
-                3600,
-                fn() => $books->get()
+        if (Auth::check()) {
+            $title = $request->input('title');
+            $filter = $request->input('filter', '');
+    
+            $books = Book::when(
+                $title,
+                fn($query, $title) => $query->title($title)
             );
-
-        return view('books.index', ['books' => $books]);
+    
+            $books = $books->when(
+                $filter === 'highest_rated_last_month',
+                fn($query) => $query->highestRatedLastMonth()
+            )->when(
+                $filter === 'highest_rated_last_6months',
+                fn($query) => $query->highestRatedLast6Months()
+            )->latest()->withAvgRating()->withReviewsCount();
+    
+            return view('books.index', ['books' => $books->get()]);
+        } else {
+            return view('auth.login');
+        }
     }
 
     /**
@@ -61,16 +59,11 @@ class BookController extends Controller
      */
     public function show(int $id)
     {
-        $cacheKey = 'book:'.$id;
-        $book = Cache::remember(
-            $cacheKey, 
-            3600, 
-            fn() => Book::with([
-                        'reviews' => fn($query) => $query->latest()
-                    ])->withAvgRating()->withReviewsCount()->findOrFail($id) 
-        );
-
-        return view('books.show',['book' => $book]);
+        $book = Book::with([
+            'reviews' => fn($query) => $query->latest()
+        ])->withAvgRating()->withReviewsCount()->findOrFail($id);
+    
+        return view('books.show', ['book' => $book]);
     }
 
     /**
