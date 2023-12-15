@@ -47,7 +47,6 @@ class ReviewController extends Controller
     {
         $review = Review::find($review);
         $book = $review->book;
-        dd($review);
         $user = Auth::user();
         return view('books.reviews.show', ['book' => $book, 'review' => $review, 'user' => $user]);
     }
