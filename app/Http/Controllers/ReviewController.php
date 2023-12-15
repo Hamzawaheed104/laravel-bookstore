@@ -37,17 +37,17 @@ class ReviewController extends Controller
         $review->user()->associate($user);
 
         $book->reviews()->save($review);
-        return redirect()->route('books.show', $book); 
+        return redirect()->route('books.show', $book)->with('success', 'Review created successfully');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($review)
+    public function show(Request $request, $book, $review)
     {
         $review = Review::find($review);
         $book = $review->book;
-        $user = Auth::user();
+        $user = $review->user;
         return view('books.reviews.show', ['book' => $book, 'review' => $review, 'user' => $user]);
     }
 
@@ -77,7 +77,7 @@ class ReviewController extends Controller
                 'review' => $data['review'],
                 'rating' => $data['rating'],
             ]);
-            return redirect()->route('books.show', ['book' => $book]);
+            return redirect()->route('books.show', ['book' => $book])->with('success', 'Review updated successfully');
         } else {
             return redirect()->route('books.show', ['book' => $book])->with('error', 'Review not updated, Please try again.');
         }
@@ -91,7 +91,7 @@ class ReviewController extends Controller
         $review = Review::find($review);
         if ($review) {
             $review->delete();
-            return redirect()->route('books.show', ['book' => $book]);
+            return redirect()->route('books.show', ['book' => $book])->with('success', 'Review deleted successfully');
         } else {
             return redirect()->route('books.show', ['book' => $book])->with('error', 'Review not deleted, Please try again.');
         }

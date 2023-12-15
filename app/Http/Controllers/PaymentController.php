@@ -14,7 +14,8 @@ class PaymentController extends Controller
         return view('payment.purchase', ['book' => $book]);
     }
 
-    public function checkout(Request $request, Book $book){
+    public function checkout(Request $request, Book $book)
+    {
         Stripe::setApiKey(env('STRIPE_SECRET')); 
         $productName = $request->input('book_name');
         $price = $request->input('price');
