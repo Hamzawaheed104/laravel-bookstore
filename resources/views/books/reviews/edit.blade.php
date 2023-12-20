@@ -6,10 +6,18 @@
     @csrf
     @method('PUT')
     
-    <label for="review">Review</label>
+    <label for="review">Review
+        @error('review')
+            <span class="text-red-500 text-xs">{{ $message }}</span>
+        @enderror
+    </label>
     <textarea name="review" id="review" required class="input mb-4">{{ old('review', $review->review) }}</textarea>
 
-    <label for="rating">Rating</label>
+    <label for="rating">Rating
+        @error('rating')
+            <span class="text-red-500 text-xs">{{ $message }}</span>
+        @enderror
+    </label>
     <select name="rating" id="rating" class="input mb-4" required>
       <option value="">Select a Rating</option>
       @for ($i = 1; $i <= 5; $i++)

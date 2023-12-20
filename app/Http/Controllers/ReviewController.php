@@ -36,7 +36,7 @@ class ReviewController extends Controller
         $review = new Review($data);
         $review->user()->associate($user);
 
-        $book->reviews()->save($review);
+        $book->reviews()->save($review); 
         return redirect()->route('books.show', $book)->with('success', 'Review created successfully');
     }
 
