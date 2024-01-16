@@ -36,10 +36,28 @@
             class="flex flex-wrap items-center justify-between">
             <div class="w-full flex-grow sm:w-auto">
               <a href="{{ route('books.show', $book) }}" class="book-title">{{ $book->title }}</a>
+              @if($book->stock == 0)
+                <span class="bg-red-500 text-white font-bold py-1 px-2 rounded-md">
+                    Out of Stock
+                </span>
+              @endif
               <span class="book-author">by {{ $book->author }}</span>
             </div>
-            <span class="text-green-700 mr-2">${{ $book->price }}</span>
-            <a href="{{ route('payment.purchase', ['book_id' => $book->id]) }}" class="btn h-10 mr-5">Purchase</a>
+            <span class="text-green-700 text-lg mr-2">${{ $book->price }}</span>
+            @if ($book->stock <= 0)
+              <button class="px-4 py-2 text-white bg-gray-500 cursor-not-allowed rounded mr-3" disabled>
+                Add To Cart
+              </button>
+            @else
+              <form action="{{ route('cart.store') }}" method="POST" enctype="multipart/form-data">
+                  @csrf
+                  <input type="hidden" value="{{ $book->id }}" name="id">
+                  <input type="hidden" value="{{ $book->title }}" name="title">
+                  <input type="hidden" value="{{ $book->price }}" name="price">
+                  <input type="hidden" value="1" name="quantity">
+                  <button class="px-4 py-2 text-white bg-blue-800 rounded mr-3">Add To Cart</button>
+              </form>
+            @endif
             <div>
               <div class="book-rating">
                 <x-star-rating :rating="$book->reviews_avg_rating" />
