@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <title>Book Reviews</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.js" defer></script>
 
   {{-- blade-formatter-disable --}}
   <style type="text/tailwindcss">
@@ -65,6 +66,18 @@
 <body>
     @include('layouts.navigation')
     <div class="container mx-auto mt-10 mb-10 max-w-10xl">
+        @if(session('success'))
+            <div class="bg-green-500 text-white p-4 mb-4 rounded-md">
+                {{ session('success') }}
+            </div>
+        @endif
+        
+        @if(session('error'))
+            <div class="bg-red-500 text-white p-4 mb-4 rounded-md">
+                {{ session('error') }}
+            </div>
+        @endif
+
         @yield('content')
     </div>
 </body>
