@@ -6,12 +6,16 @@ use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Models\Book;
+use App\Models\Cart;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
     public function purchase(Request $request){
-        $book = Book::find($request->book_id);
-        return view('payment.purchase', ['book' => $book]);
+        $user = Auth::user();
+        $cart = $user->cart;
+        $cartItems = $cart->cartItems;
+        return view('payment.purchase', ['cartItems' => $cartItems]);
     }
 
     public function checkout(Request $request, Book $book)

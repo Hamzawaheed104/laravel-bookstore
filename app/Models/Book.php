@@ -18,6 +18,14 @@ class Book extends Model
        return $this->hasMany(Review::class);
     }
 
+    public function cartItem(){
+        return $this->hasOne(cartItem::class);
+    }
+
+    public function orderItem(){
+        return $this->hasOne(orderItem::class);
+    }
+
     public function scopeTitle(Builder $query, string $title): Builder 
     {
         return $query->where('title','LIKE','%'.$title.'%');

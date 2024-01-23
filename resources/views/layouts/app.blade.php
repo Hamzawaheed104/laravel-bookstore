@@ -60,6 +60,10 @@
     .reset-link {
       @apply text-slate-500 underline;
     }
+
+    .quantity-box{
+        width: 5rem;
+    }
   </style>
   {{-- blade-formatter-enable --}}
 </head>
