@@ -40,4 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('clear', [CartController::class, 'clearAllCart'])->name('cart.clear');
 });
 
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
+
 require __DIR__.'/auth.php';

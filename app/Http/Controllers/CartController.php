@@ -132,6 +132,7 @@ class CartController extends Controller
     {
         \Cart::clear();
         $user = Auth::user();
+        
         if ($user->cart) {
             $user->cart->delete();
         }
