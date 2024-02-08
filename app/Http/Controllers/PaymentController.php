@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function purchase(Request $request){
+    public function shipping(Request $request){
         $user = Auth::user();
         $cart = $user->cart;
         $cartItems = $cart->cartItems;
@@ -27,8 +27,9 @@ class PaymentController extends Controller
             return $cartItem->item_total_price;
         });
 
-        return view('payment.purchase', ['cartItems' => $cartItems, 'total' => $total]);
-    }
+        $addresses = $user->addresses;
+        return view('payment.shipping', ['cartItems' => $cartItems, 'total' => $total, 'addresses' => $addresses]);
+    } 
 
     public function checkout(Request $request)
     {

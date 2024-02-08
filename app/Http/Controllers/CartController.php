@@ -59,7 +59,7 @@ class CartController extends Controller
                 ]);
             }
             
-            session()->flash('success', 'Product is added to Cart Successfully !');
+            session()->flash('success', $book->title . ' is added to Cart Successfully !');
             return redirect()->route('dashboard');
         }else{
             session()->flash('error', 'Book is out of stock !');
@@ -70,47 +70,39 @@ class CartController extends Controller
 
     public function updateCart(Request $request)
     {
+        $user = Auth::user();
         $book = Book::find($request->id);
-        if($book->stock >= $request->quantity){
-            \Cart::update(
-                $request->id,
-                [
-                    'quantity' => [
-                        'relative' => false,
-                        'value' => $request->quantity
-                    ],
-                ]
-            );
-    
-            $user = Auth::user();
-            $cart = Cart::where('user_id', $user->id)->first();
-            $cartItem = $cart->cartItems->where('book_id', $request->id)->first();
-            $book = Book::find($request->id);
-    
-            if($cartItem){
-                if($request->quantity == 0){
-                    \Cart::remove($request->id);
-                    $cartItem->delete();
-                }else{
-                    $cartItem->quantity = $request->quantity;
-                    $cartItem->item_total_price = $request->quantity * $book->price;
-                    $cartItem->save();
-                }
-            }
 
-            if ($user->cart->cartItems->count()  == 0){
-                \Cart::remove($request->id);
-                $cart->delete();
-                session()->flash('success', 'Cart is clear Successfully !');
-                return redirect()->route('dashboard');
-            }else{
-                session()->flash('success', 'Cart is updated Successfully !');
-                return redirect()->route('cart.list');
-            }
-        }else{
-            session()->flash('error', 'Book is out of stock, Please try with low quantity !');
-            return redirect()->route('cart.list');
+        if (!$book) {
+            return response()->json(['success' => false, 'message' => 'Book not found'], 404);
         }
+
+        if ($book->stock < $request->quantity) {
+            return response()->json(['success' => false, 'message' => 'Insufficient stock. Available stock of '.$book->title.' is '.$book->stock], 400);
+        }
+
+        $cart = Cart::where('user_id', $user->id)->first();
+        $cartItem = $cart->cartItems->where('book_id', $request->id)->first();
+
+        if (!$cartItem) {
+            return response()->json(['success' => false, 'message' => 'Item not in cart'], 404);
+        }
+
+        $cartItem->quantity = $request->quantity;
+        $cartItem->item_total_price = $request->quantity * $book->price;
+        $cartItem->save();
+
+        \Cart::update(
+            $request->id,
+            [
+                'quantity' => [
+                    'relative' => false,
+                    'value' => $request->quantity
+                ],
+            ]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Cart updated successfully']);
     }
 
     public function removeCart(Request $request)

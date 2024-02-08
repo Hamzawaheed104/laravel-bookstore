@@ -42,15 +42,16 @@
                                                     @endif
                                                 </td>
                                                 <td class="py-2 px-4 text-center">
-                                                    <div class="flex items-center justify-center">
-                                                        <form action="{{ route('cart.update') }}" method="POST">
-                                                            @csrf
-                                                            <input type="hidden" name="id" value="{{ $item->id }}" />
-                                                            <input type="number" name="quantity" value="{{ $item->quantity }}" class="text-center quantity-box bg-gray-200 rounded-md" />
-                                                            <button type="submit" class="ml-2 px-4 py-2 text-white bg-blue-500 rounded-md">Update</button>
-                                                        </form>
+                                                    <div class="flex items-center justify-center space-x-2">
+                                                        <button type="button" class="update-quantity-btn bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center" data-id="{{ $item->id }}" data-quantity="{{ $item->quantity - 1 }}">
+                                                            &ndash;
+                                                        </button>
+                                                        <span class="mx-2 text-lg">{{ $item->quantity }}</span>
+                                                        <button type="button" class="update-quantity-btn bg-green-500 text-white rounded-full h-8 w-8 flex items-center justify-center" data-id="{{ $item->id }}" data-quantity="{{ $item->quantity + 1 }}">
+                                                            &#43;
+                                                        </button>
                                                     </div>
-                                                </td>
+                                                </td>                                                
                                                 <td class="hidden py-2 px-4 text-center md:table-cell">
                                                     ${{ $item->price }}
                                                 </td>
@@ -69,7 +70,7 @@
                             <div class="mt-6 flex justify-end items-center">
                                 <div class="text-lg font-bold">Total: ${{ Cart::getTotal() }}</div>
                                 @if (!$isAnyBookOutOfStock)
-                                    <a href="{{ route('payment.purchase') }}" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 ml-5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Checkout</a>
+                                    <a href="{{ route('payment.shipping') }}" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 ml-5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Checkout</a>
                                 @else
                                     <button class="focus:outline-none text-white bg-gray-500 cursor-not-allowed rounded-lg text-sm px-5 py-2.5 me-2 ml-5" disabled>Checkout (Out of Stock)</button>
                                 @endif
@@ -77,7 +78,7 @@
                                 <div class="ml-2">
                                     <form action="{{ route('cart.clear') }}" method="POST">
                                         @csrf
-                                        <button class="px-6 py-2 text-white bg-red-600 rounded-md">Remove All Cart</button>
+                                        <button class="px-6 py-2 text-white bg-red-600 rounded-md">Clear Cart</button>
                                     </form>
                                 </div>
                             </div>
@@ -87,4 +88,45 @@
             </div>
         </div>
     </main>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.update-quantity-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-id');
+                const newQuantity = this.getAttribute('data-quantity');
+                
+                fetch("{{ route('cart.update') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ id: itemId, quantity: newQuantity })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        window.location.reload();
+                    } else {
+                        debugger
+                        const existingErrorMessage = document.querySelector('.error-message');
+                        if (existingErrorMessage) {
+                            existingErrorMessage.remove();
+                        }
+                        
+                        const errorMessage = document.createElement('div');
+                        errorMessage.classList.add('p-4', 'bg-red-500', 'text-white', 'mb-4', 'rounded-md');
+                        errorMessage.textContent = data.message;
+                        
+                        const cartContainer = document.querySelector('.container');
+                        cartContainer.insertBefore(errorMessage, cartContainer.firstChild);
+                    }
+                });
+            });
+        });
+    });
+    </script>
 @endsection

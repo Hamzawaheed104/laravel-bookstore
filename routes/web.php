@@ -27,11 +27,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('books', BookController::class)->only(['index', 'show']);
+    Route::get('/search-books', [BookController::class, 'search'])->name('books.search');
     Route::resource('books.reviews', ReviewController::class)->scoped(['review' => 'book']);
 
     Route::post('/checkout',[PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/success',[PaymentController::class, 'success'])->name('payment.success');
-    Route::get('/purchase', [PaymentController::class, 'purchase'])->name('payment.purchase');
+    Route::get('/shipping', [PaymentController::class, 'shipping'])->name('payment.shipping');
 
     Route::get('cart', [CartController::class, 'cartList'])->name('cart.list');
     Route::post('cart', [CartController::class, 'addToCart'])->name('cart.store');

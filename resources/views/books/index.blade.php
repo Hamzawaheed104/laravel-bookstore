@@ -3,12 +3,14 @@
 @section('content')
   <h1 class="mb-10 text-2xl">Books</h1>
 
-  <form method="GET" action="{{ route('books.index') }}" class="mb-4 flex items-center space-x-2">
-    <input type="text" name="title" placeholder="Search by title"
-      value="{{ request('title') }}" class="input h-10" />
+  <form method="GET" action="{{ route('books.index') }}" class="mb-4 flex items-center space-x-2 relative">
+    <div class="flex flex-col w-full">
+      <input type="text" name="title" placeholder="Search by title" value="{{ request('title') }}" class="input h-10 border border-gray-300" id="search-input" autocomplete="off" />
+      <div id="search-results" class="absolute z-20 bg-white w-full border border-gray-200 shadow-lg rounded-md overflow-hidden hidden" style="top: 100%;"></div>
+    </div>
     <input type="hidden" name="filter" value="{{ request('filter') }}" />
-    <button type="submit" class="btn h-10">Search</button>
-    <a href="{{ route('books.index') }}" class="btn h-10">Clear</a>
+    <button type="submit" class="btn h-10 bg-blue-500 text-white rounded-md">Search</button>
+    <a href="{{ route('books.index') }}" class="btn h-10 bg-gray-300 text-black rounded-md">Clear</a>
   </form>
 
   <div class="filter-container mb-4 flex">
@@ -78,4 +80,53 @@
       </li>
     @endforelse
   </ul>
+
+  <script>
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+
+    searchInput.addEventListener('input', function(e) {
+        const value = e.target.value;
+    
+        if (!value) {
+            document.getElementById('search-results').classList.add('hidden');
+            return;
+        }
+    
+        fetch(`/search-books?query=${encodeURIComponent(value)}`)
+            .then(response => response.json())
+            .then(data => {
+                let resultsContainer = document.getElementById('search-results');
+                resultsContainer.innerHTML = '';
+                if (data.length) {
+                    data.forEach(book => {
+                        let searchDiv = document.createElement('div');
+                        searchDiv.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer');
+                        searchDiv.textContent = book.title;
+                        searchDiv.dataset.id = book.id;
+                        searchDiv.addEventListener('click', () => {
+                          window.location.href = `/books/${book.id}`;
+                        });
+                        resultsContainer.appendChild(searchDiv);
+                    });
+                    resultsContainer.classList.remove('hidden');
+                } else {
+                    resultsContainer.classList.add('hidden');
+                }
+            });
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+        searchResults.classList.add('hidden');
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        searchResults.classList.add('hidden');
+      }
+    });
+  </script>
+    
 @endsection
