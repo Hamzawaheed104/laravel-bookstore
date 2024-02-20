@@ -17,7 +17,7 @@
                                         <tr class="bg-gray-100">
                                             <th class="py-2 px-4 border-b">Book Title</th>
                                             <th class="py-2 px-4 border-b lg:pl-5">Quantity</th>
-                                            <th class="hidden py-2 px-4 border-b md:table-cell">Price</th>
+                                            <th class="hidden py-2 px-4 border-b md:table-cell">Item unit Price</th>
                                             <th class="hidden py-2 px-4 border-b md:table-cell">Actions</th>
                                         </tr>
                                     </thead>
@@ -59,7 +59,11 @@
                                                     <form action="{{ route('cart.remove') }}" method="POST">
                                                         @csrf
                                                         <input type="hidden" value="{{ $item->id }}" name="id">
-                                                        <button class="px-4 py-2 text-white bg-red-600 rounded-md">Remove</button>
+                                                        <button type="submit" class="p-1 rounded-md hover:bg-red-600">
+                                                            <svg class="w-6 h-6 fill-current text-red-500" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z"></path>
+                                                            </svg>                                                       
+                                                        </button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -68,9 +72,9 @@
                                 </table>
                             </div>
                             <div class="mt-6 flex justify-end items-center">
-                                <div class="text-lg font-bold">Total: ${{ Cart::getTotal() }}</div>
+                                <div class="text-lg font-bold">Total: $<span id="totalPrice">{{ Cart::getTotal() }}<span></div>
                                 @if (!$isAnyBookOutOfStock)
-                                    <a href="{{ route('payment.shipping') }}" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 ml-5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Checkout</a>
+                                    <a href="{{ route('cart.checkout') }}" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 ml-5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Checkout</a>
                                 @else
                                     <button class="focus:outline-none text-white bg-gray-500 cursor-not-allowed rounded-lg text-sm px-5 py-2.5 me-2 ml-5" disabled>Checkout (Out of Stock)</button>
                                 @endif
@@ -90,43 +94,6 @@
     </main>
 @endsection
 
-@section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.update-quantity-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-id');
-                const newQuantity = this.getAttribute('data-quantity');
-                
-                fetch("{{ route('cart.update') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ id: itemId, quantity: newQuantity })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.success) {
-                        window.location.reload();
-                    } else {
-                        debugger
-                        const existingErrorMessage = document.querySelector('.error-message');
-                        if (existingErrorMessage) {
-                            existingErrorMessage.remove();
-                        }
-                        
-                        const errorMessage = document.createElement('div');
-                        errorMessage.classList.add('p-4', 'bg-red-500', 'text-white', 'mb-4', 'rounded-md');
-                        errorMessage.textContent = data.message;
-                        
-                        const cartContainer = document.querySelector('.container');
-                        cartContainer.insertBefore(errorMessage, cartContainer.firstChild);
-                    }
-                });
-            });
-        });
-    });
-    </script>
+@section('footerScripts')
+    <script src="{{ asset('js/cart.js') }}"></script>
 @endsection

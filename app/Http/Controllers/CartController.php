@@ -82,28 +82,49 @@ class CartController extends Controller
         }
 
         $cart = Cart::where('user_id', $user->id)->first();
+        if (!$cart) {
+            return response()->json(['success' => false, 'message' => 'Cart not found'], 404);
+        }
+
         $cartItem = $cart->cartItems->where('book_id', $request->id)->first();
 
         if (!$cartItem) {
             return response()->json(['success' => false, 'message' => 'Item not in cart'], 404);
         }
 
-        $cartItem->quantity = $request->quantity;
-        $cartItem->item_total_price = $request->quantity * $book->price;
-        $cartItem->save();
+        if ($request->quantity == 0) {
+            $cartItem->delete();
+            \Cart::remove($request->id);
+        
+            return response()->json(['success' => true, 'message' => 'Item removed from cart.']);
 
-        \Cart::update(
-            $request->id,
-            [
-                'quantity' => [
-                    'relative' => false,
-                    'value' => $request->quantity
-                ],
-            ]
-        );
+        } else {
+            $cartItem->quantity = $request->quantity;
+            $cartItem->item_total_price = $request->quantity * $book->price;
+            $cartItem->save();
 
-        return response()->json(['success' => true, 'message' => 'Cart updated successfully']);
+            \Cart::update(
+                $request->id,
+                [
+                    'quantity' => [
+                        'relative' => false,
+                        'value' => $request->quantity
+                    ],
+                ]
+            );
+
+            $newTotal = \Cart::getTotal();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cart updated successfully',
+                'item_total_price' => $cartItem->item_total_price,
+                'new_total' => $newTotal,
+                'item_id' => $request->id
+            ]);
+        }
     }
+
 
     public function removeCart(Request $request)
     {

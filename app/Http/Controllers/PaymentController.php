@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\Address;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Stripe;
 use Stripe\StripeClient;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function shipping(Request $request){
+    public function checkout(Request $request){
         $user = Auth::user();
         $cart = $user->cart;
         $cartItems = $cart->cartItems;
@@ -28,39 +29,98 @@ class PaymentController extends Controller
         });
 
         $addresses = $user->addresses;
-        return view('payment.shipping', ['cartItems' => $cartItems, 'total' => $total, 'addresses' => $addresses]);
+        return view('cart.shipping', ['cartItems' => $cartItems, 'total' => $total, 'addresses' => $addresses]);
     } 
 
-    public function checkout(Request $request)
-    {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+    public function shipping(Request $request){
+        $user = Auth::user();
+
+        if ($request->has('selectedAddressId') && $request->input('selectedAddressId') != '') {
+            $addressId = $request->input('selectedAddressId');
+            $address = Address::find($addressId);
+
+            if (!$address) {
+                return redirect()->back()->withErrors(['selectedAddressId' => 'The selected address is invalid. Please try again with another address']);
+            }
+        } else {
+            $validationRules = [
+                'street' => 'required|string|max:255',
+                'city' => 'required|string|max:255',
+                'region' => 'required|string|max:255',
+                'country' => 'required|string|max:255',
+                'zip' => 'required|regex:/^\d{4,6}$/',
+                'contact_number' => 'required|regex:/^[\d\s+\-()]{1,15}$/'
+            ];
+            $validatedData = $request->validate($validationRules);
+
+            $address = $user->addresses()->create($validatedData); 
+
+            if (!$address) {
+                return redirect()->back()->withErrors(['address' => 'The address could not be created. Please try again']);
+            }
+        }
+
+        session(['checkoutAddress' => $address->id]);
+        return redirect()->route('payment.payment')->with('addressId', $address->id);
+    }
+
+    public function payment(Request $request){
+        $checkoutAddressId = session('checkoutAddress');
+        $address = null;
+
+        if ($checkoutAddressId) {
+            $address = Address::find($checkoutAddressId);
+        }
 
         $user = Auth::user();
         $cart = $user->cart;
         $cartItems = $cart->cartItems;
+        $total = $cartItems->sum(function ($cartItem) {
+            return $cartItem->item_total_price;
+        });
 
-        $lineItems = $cartItems->map(function ($item) {
-            return [
-                'price_data' => [
-                    'currency' => 'usd',
-                    'product_data' => [
-                        'name' => $item->book->title,
+        return view('payment.payment', ['address' => $address, 'cartItems' => $cartItems, 'total' => $total]);
+    }
+
+    public function confirmOrder(Request $request)
+    {
+        $user = Auth::user();
+
+        if($request->input('paymentMethod') == 'CashOnDelivery'){
+            $paymentType = 'cash_on_delivery';
+            $this->createOrder($user->id, $paymentType);
+            $this->clearCart($user->id);
+            return redirect()->route('payment.success');
+        }else{
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+
+            $cart = $user->cart;
+            $cartItems = $cart->cartItems;
+    
+            $lineItems = $cartItems->map(function ($item) {
+                return [
+                    'price_data' => [
+                        'currency' => 'usd',
+                        'product_data' => [
+                            'name' => $item->book->title,
+                        ],
+                        'unit_amount' => $item->item_total_price * 100,
                     ],
-                    'unit_amount' => $item->item_total_price * 100,
-                ],
-                'quantity' => $item->quantity,
-            ];
-        })->all();
-
-        $session = Session::create([
-            'line_items' => $lineItems,
-            'mode' => 'payment',
-            'success_url' => route('payment.success'),
-            'cancel_url' => route('dashboard'),
-            'metadata' => ['user_id' => $user->id],
-        ]);
-
-        return redirect()->away($session->url);
+                    'quantity' => $item->quantity,
+                ];
+            })->all();
+    
+            $session = Session::create([
+                'line_items' => $lineItems,
+                'mode' => 'payment',
+                'success_url' => route('payment.success'),
+                'cancel_url' => route('dashboard'),
+                'metadata' => ['user_id' => $user->id],
+            ]);
+    
+            return redirect()->away($session->url);
+        }
+        
     }
     
     public function success(){
@@ -108,21 +168,25 @@ class PaymentController extends Controller
     protected function handleCheckoutSession($paymentIntent)
     {
         Log::info('In function charge succeeded', ['data' => $paymentIntent]);
-        \Cart::clear();
-
         $userId = $paymentIntent->metadata->user_id;
         Log::info('User Info', ['user' => $userId]);
+        $paymentType = 'card_payment';
+        $this->createOrder($userId, $paymentType);
+        $this->clearCart($userId);
+    }
 
+    protected function createOrder($userId, $paymentType){
         $cart = Cart::where('user_id', $userId)->first();
         Log::info('Cart info', ['cart' => $cart]);
 
         if($cart){
             $order = Order::create([
                 'user_id' => $userId,
-                'status' => 'processing'
+                'status' => 'processing',
+                'payment_type' => $paymentType
             ]);
             Log::info('Order info', ['order' => $order]);
-
+    
             $cartItems = $cart->cartItems->all();
             foreach($cartItems as $cartItem){
                 $orderItem = new OrderItem();
@@ -132,12 +196,26 @@ class PaymentController extends Controller
                 $orderItem->item_price = $cartItem->item_total_price * $cartItem->quantity;
                 $orderItem->save();
             }
-            Log::info('cartitems',  ['cartItems' => $cartItems]);
+            return $order->id;
         }
-        $cartItems = $cart->cartItems;
+        
+        return null;
+    }
+
+    private function clearCart($userId){
         $user = User::find($userId);
+        $cart = $user->cart;
+        $cartItems = $cart->cartItems;
         if ($user->cart) {
+            Log::info('Cart is found inside condition');
+            $cart->cartItems->each(function($cartItem) {
+                $cartItem->delete();
+            });
             $user->cart->delete();
         }
+        \Cart::clear();
+        Log::info('Cart Items', ['cartItems' => $user->cart->cartItems]);
+
+        return true;
     }
 }

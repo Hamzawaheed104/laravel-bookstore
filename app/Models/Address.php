@@ -15,6 +15,7 @@ class Address extends Model
         'region',
         'country',
         'zip',
+        'contact_number',
         'user_id',
     ];
 
