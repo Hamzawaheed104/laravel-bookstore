@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.js" defer></script>
 
-  {{-- blade-formatter-disable --}}
   <style type="text/tailwindcss">
     .btn {
       @apply bg-white rounded-md px-4 py-2 text-center font-medium text-slate-500 shadow-sm ring-1 ring-slate-700/10 hover:bg-slate-50 h-10;
@@ -65,7 +64,6 @@
         width: 5rem;
     }
   </style>
-  {{-- blade-formatter-enable --}}
 </head>
 <body>
     @include('layouts.navigation')
@@ -83,6 +81,7 @@
         @endif
 
         @yield('content')
+        @yield('footerScripts')
     </div>
 </body>
 

@@ -3,12 +3,14 @@
 @section('content')
   <h1 class="mb-10 text-2xl">Books</h1>
 
-  <form method="GET" action="{{ route('books.index') }}" class="mb-4 flex items-center space-x-2">
-    <input type="text" name="title" placeholder="Search by title"
-      value="{{ request('title') }}" class="input h-10" />
+  <form method="GET" action="{{ route('books.index') }}" class="mb-4 flex items-center space-x-2 relative">
+    <div class="flex flex-col w-full">
+      <input type="text" name="title" placeholder="Search by title" value="{{ request('title') }}" class="input h-10 border border-gray-300" id="search-input" autocomplete="off" />
+      <div id="search-results" class="absolute z-20 bg-white w-full border border-gray-200 shadow-lg rounded-md overflow-hidden hidden" style="top: 100%;"></div>
+    </div>
     <input type="hidden" name="filter" value="{{ request('filter') }}" />
-    <button type="submit" class="btn h-10">Search</button>
-    <a href="{{ route('books.index') }}" class="btn h-10">Clear</a>
+    <button type="submit" class="btn h-10 bg-blue-500 text-white rounded-md">Search</button>
+    <a href="{{ route('books.index') }}" class="btn h-10 bg-gray-300 text-black rounded-md">Clear</a>
   </form>
 
   <div class="filter-container mb-4 flex">
@@ -78,4 +80,9 @@
       </li>
     @endforelse
   </ul>
+
+@endsection
+
+@section('footerScripts')
+    <script src="{{ asset('js/bookIndex.js') }}"></script>
 @endsection

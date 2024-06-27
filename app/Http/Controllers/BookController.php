@@ -38,6 +38,17 @@ class BookController extends Controller
         }
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->query('query');
+
+        $books = Book::where('title', 'like', "%{$query}%")
+                    ->limit(5)
+                    ->get(['id', 'title']);
+
+        return response()->json($books);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
